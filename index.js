@@ -15,13 +15,13 @@ app.use(express.json());
 function verifyJwt(req, res, next) {
     // console.log('token inside verifyJwt', req.headers.authorization)
     const authHeader = req.headers.authorization
-    if(!authHeader){
+    if (!authHeader) {
         res.status(401).send("Unauthorized access")
     }
     const token = authHeader.split(' ')[1];
-    jwt.verify(token , process.env.ACCESS_TOKEN, function(error, decoded){
-        if(error){
-            res.status(403).send({message : 'forbidden access'})
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (error, decoded) {
+        if (error) {
+            res.status(403).send({ message: 'forbidden access' })
         }
         req.decoded = decoded
         next()
@@ -36,17 +36,39 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const usersCollection = client.db('timeCraftDB').collection('users');
+        const newsLetterCollection = client.db('timeCraftDB').collection('newsLetter');
+
+        app.post('/newsLetterEmails', async (req, res)=> {
+            const email = req.body;
+            console.log(email)
+            const newsLetterEmail = await newsLetterCollection.insertOne(email)
+            res.send(newsLetterEmail)
+        })
 
         app.post('/users', async (req, res) => {
             const user = req.body;
             const userData = await usersCollection.insertOne(user)
             res.send(userData)
         })
+        app.patch('/users', async (req, res) => {
+            const user = req.body;
+            const email = user?.email;
+            const query = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    name: user?.name,
+                    imageURL: user?.imageURL,
+                },
+            };
+            const userData = await usersCollection.updateOne(query, updateDoc, options)
+            res.send(userData)
+        })
         app.get('/users', verifyJwt, async (req, res) => {
             const email = req.query.email
             const decodedEmail = req.decoded.email
-            if(email !== decodedEmail){
-                return res.status(403).send({message : 'forbidden access'})
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
             }
             const query = {};
             const userData = await usersCollection.find(query).toArray();
