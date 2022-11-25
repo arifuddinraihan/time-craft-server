@@ -16,11 +16,25 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 // console.log(uri)
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-async function run(){
-    try{
-        
+async function run() {
+    try {
+        const usersCollection = client.db('timeCraftDB').collection('users');
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const userData = await usersCollection.insertOne(user)
+            res.send(userData)
+        })
+        app.get('/users', async (req, res) => {
+            const query = {};
+            const userData = await usersCollection.find(query).toArray();
+            res.send(userData)
+        })
+
+
+
     }
-    finally{
+    finally {
 
     }
 }
