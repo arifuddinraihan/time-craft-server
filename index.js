@@ -112,6 +112,25 @@ async function run() {
             res.send(userData)
         })
 
+        app.put('/users/sellers/:id', verifyJwt, async (req, res) => {
+            const decodedEmail = req.decoded.email
+            const query = { email: decodedEmail }
+            const user = await usersCollection.findOne(query)
+            if (user.admin !== "yes") {
+                return res.status(403).send({ message: 'forbidden access, your not an Admin' })
+            }
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    verifySeller: "yes"
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updateDoc, options)
+            res.send(result)
+        })
+
         app.get('/users/buyers', verifyJwt, async (req, res) => {
             const email = req.query.email
             const decodedEmail = req.decoded.email
@@ -146,9 +165,6 @@ async function run() {
                     admin: "yes"
                 }
             }
-            // console.log(id)
-            // console.log(filter)
-            // const query = { role: "Buyer" };
             const result = await usersCollection.updateOne(filter, updateDoc, options)
             res.send(result)
         })
