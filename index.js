@@ -40,7 +40,17 @@ async function run() {
         const newsLetterCollection = client.db('timeCraftDB').collection('newsLetter');
         const allProductsCollection = client.db('timeCraftDB').collection('allProducts');
         // const allProductCollection = 
+        
+        const verifyAdmin = async (req, res, next) => {
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await usersCollection.findOne(query);
 
+            if (user?.admin !== 'yes') {
+                return res.status(403).send({ message: 'forbidden access, your are not an Admin' })
+            }
+            next();
+        }
 
 
         app.post('/newsLetterEmails', async (req, res) => {
@@ -79,6 +89,7 @@ async function run() {
             const userData = await usersCollection.updateOne(query, updateDoc, options)
             res.send(userData)
         })
+
         app.get('/users', verifyJwt, async (req, res) => {
             const email = req.query.email
             const decodedEmail = req.decoded.email
@@ -89,6 +100,7 @@ async function run() {
             const userData = await usersCollection.find(query).toArray();
             res.send(userData)
         })
+
         app.get('/users/sellers', verifyJwt, async (req, res) => {
             const email = req.query.email
             const decodedEmail = req.decoded.email
@@ -99,6 +111,7 @@ async function run() {
             const userData = await usersCollection.find(query).toArray();
             res.send(userData)
         })
+
         app.get('/users/buyers', verifyJwt, async (req, res) => {
             const email = req.query.email
             const decodedEmail = req.decoded.email
@@ -110,12 +123,19 @@ async function run() {
             res.send(userData)
         })
 
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const adminUser = await usersCollection.findOne(query)
+            res.send({ isAdmin: adminUser?.admin === 'yes' });
+        })
+
         // Admin making an Admin from usersCollection only buyer can e be an Admin
         app.put('/users/admin/:id', verifyJwt, async (req, res) => {
             const decodedEmail = req.decoded.email
             const query = { email: decodedEmail }
             const user = await usersCollection.findOne(query)
-            if (user.admin === "yes") {
+            if (user.admin !== "yes") {
                 return res.status(403).send({ message: 'forbidden access, your not an Admin' })
             }
             const id = req.params.id;
