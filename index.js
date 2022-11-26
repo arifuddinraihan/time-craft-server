@@ -80,16 +80,51 @@ async function run() {
             const userData = await usersCollection.find(query).toArray();
             res.send(userData)
         })
+        app.get('/users/sellers', verifyJwt, async (req, res) => {
+            const email = req.query.email
+            const decodedEmail = req.decoded.email
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            const query = { role: "Seller" };
+            const userData = await usersCollection.find(query).toArray();
+            res.send(userData)
+        })
+        app.get('/users/buyers', verifyJwt, async (req, res) => {
+            const email = req.query.email
+            const decodedEmail = req.decoded.email
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            const query = { role: "Buyer" };
+            const userData = await usersCollection.find(query).toArray();
+            res.send(userData)
+        })
 
         app.post('/allProducts', async (req, res) => {
             const productDetails = req.body;
             const newPostedProduct = await allProductsCollection.insertOne(productDetails)
             res.send(newPostedProduct);
         })
-        app.get('/allProducts', async (req, res) => {
+        app.get('/allProducts',verifyJwt, async (req, res) => {
+            const email = req.query.email
+            const decodedEmail = req.decoded.email
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
             const query = {};
             const getAllProducts = await allProductsCollection.find(query).toArray()
             res.send(getAllProducts);
+        })
+        app.get('/allProducts', verifyJwt, async (req, res) => {
+            const email = req.query.email
+            const decodedEmail = req.decoded.email
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            const query = { sellerEmail: email };
+            const userData = await usersCollection.find(query).toArray();
+            res.send(userData)
         })
 
 
@@ -98,7 +133,7 @@ async function run() {
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             if (user) {
-                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '1h' })
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '2 days' })
                 return res.send({ accessToken: token });
             }
             res.status(403).send({ accessToken: '' })
