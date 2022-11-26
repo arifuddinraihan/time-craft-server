@@ -37,8 +37,12 @@ async function run() {
     try {
         const usersCollection = client.db('timeCraftDB').collection('users');
         const newsLetterCollection = client.db('timeCraftDB').collection('newsLetter');
+        const allProductsCollection = client.db('timeCraftDB').collection('allProducts');
+        // const allProductCollection = 
 
-        app.post('/newsLetterEmails', async (req, res)=> {
+
+
+        app.post('/newsLetterEmails', async (req, res) => {
             const email = req.body;
             console.log(email)
             const newsLetterEmail = await newsLetterCollection.insertOne(email)
@@ -50,6 +54,8 @@ async function run() {
             const userData = await usersCollection.insertOne(user)
             res.send(userData)
         })
+
+        // Problem in user data base using google login
         app.patch('/users', async (req, res) => {
             const user = req.body;
             const email = user?.email;
@@ -74,6 +80,18 @@ async function run() {
             const userData = await usersCollection.find(query).toArray();
             res.send(userData)
         })
+
+        app.post('/allProducts', async (req, res) => {
+            const productDetails = req.body;
+            const newPostedProduct = await allProductsCollection.insertOne(productDetails)
+            res.send(newPostedProduct);
+        })
+        app.get('/allProducts', async (req, res) => {
+            const query = {};
+            const getAllProducts = await allProductsCollection.find(query).toArray()
+            res.send(getAllProducts);
+        })
+
 
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
