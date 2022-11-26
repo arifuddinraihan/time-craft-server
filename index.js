@@ -46,7 +46,7 @@ async function run() {
             const query = { email: decodedEmail };
             const user = await usersCollection.findOne(query);
 
-            if (user?.admin !== 'yes') {
+            if (user?.role !== 'admin') {
                 return res.status(403).send({ message: 'forbidden access, your are not an Admin' })
             }
             next();
@@ -112,11 +112,25 @@ async function run() {
             res.send(userData)
         })
 
+        app.delete('/users/sellers/:id', verifyJwt, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id : ObjectId(id) }
+            const result = await usersCollection.deleteOne(filter)
+            res.send(result)
+        })
+        app.delete('/users/buyers/:id', verifyJwt, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id : ObjectId(id) }
+            const result = await usersCollection.deleteOne(filter)
+            res.send(result)
+        })
+
+    
         app.put('/users/sellers/:id', verifyJwt, async (req, res) => {
             const decodedEmail = req.decoded.email
             const query = { email: decodedEmail }
             const user = await usersCollection.findOne(query)
-            if (user.admin !== "yes") {
+            if (user.role !== "admin") {
                 return res.status(403).send({ message: 'forbidden access, your not an Admin' })
             }
             const id = req.params.id;
@@ -146,7 +160,7 @@ async function run() {
             const email = req.params.email;
             const query = { email };
             const adminUser = await usersCollection.findOne(query)
-            res.send({ isAdmin: adminUser?.admin === 'yes' });
+            res.send({ isAdmin: adminUser?.role === 'admin' });
         })
         app.get('/users/sellers/:email', async (req, res) => {
             const email = req.params.email;
@@ -154,13 +168,19 @@ async function run() {
             const adminUser = await usersCollection.findOne(query)
             res.send({ isSeller: adminUser?.role === 'Seller' });
         })
+        app.get('/users/buyers/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const adminUser = await usersCollection.findOne(query)
+            res.send({ isBuyer: adminUser?.role === 'Buyer' });
+        })
 
         // Admin making an Admin from usersCollection only buyer can e be an Admin
         app.put('/users/admin/:id', verifyJwt, async (req, res) => {
             const decodedEmail = req.decoded.email
             const query = { email: decodedEmail }
             const user = await usersCollection.findOne(query)
-            if (user.admin !== "yes") {
+            if (user.role !== "admin") {
                 return res.status(403).send({ message: 'forbidden access, your not an Admin' })
             }
             const id = req.params.id;
@@ -168,7 +188,7 @@ async function run() {
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
-                    admin: "yes"
+                    role: "admin"
                 }
             }
             const result = await usersCollection.updateOne(filter, updateDoc, options)
