@@ -148,6 +148,12 @@ async function run() {
             const adminUser = await usersCollection.findOne(query)
             res.send({ isAdmin: adminUser?.admin === 'yes' });
         })
+        app.get('/users/sellers/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const adminUser = await usersCollection.findOne(query)
+            res.send({ isSeller: adminUser?.role === 'Seller' });
+        })
 
         // Admin making an Admin from usersCollection only buyer can e be an Admin
         app.put('/users/admin/:id', verifyJwt, async (req, res) => {
