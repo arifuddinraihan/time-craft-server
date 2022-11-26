@@ -39,8 +39,9 @@ async function run() {
         const usersCollection = client.db('timeCraftDB').collection('users');
         const newsLetterCollection = client.db('timeCraftDB').collection('newsLetter');
         const allProductsCollection = client.db('timeCraftDB').collection('allProducts');
+        const productsCategoryCollection = client.db('timeCraftDB').collection('productsCategory');
         // const allProductCollection = 
-        
+
         const verifyAdmin = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
             const query = { email: decodedEmail };
@@ -114,18 +115,18 @@ async function run() {
 
         app.delete('/users/sellers/:id', verifyJwt, verifyAdmin, async (req, res) => {
             const id = req.params.id;
-            const filter = { _id : ObjectId(id) }
+            const filter = { _id: ObjectId(id) }
             const result = await usersCollection.deleteOne(filter)
             res.send(result)
         })
         app.delete('/users/buyers/:id', verifyJwt, verifyAdmin, async (req, res) => {
             const id = req.params.id;
-            const filter = { _id : ObjectId(id) }
+            const filter = { _id: ObjectId(id) }
             const result = await usersCollection.deleteOne(filter)
             res.send(result)
         })
 
-    
+
         app.put('/users/sellers/:id', verifyJwt, async (req, res) => {
             const decodedEmail = req.decoded.email
             const query = { email: decodedEmail }
@@ -195,6 +196,11 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/productsCategory', async (req, res) => {
+            const query = {}
+            const result = await productsCategoryCollection.find(query).toArray()
+            res.send(result);
+        })
 
         app.post('/allProducts', async (req, res) => {
             const productDetails = req.body;
@@ -207,9 +213,17 @@ async function run() {
             if (email !== decodedEmail) {
                 return res.status(403).send({ message: 'forbidden access' })
             }
+            const category = await productsCategoryCollection.find()
             const query = {};
             const getAllProducts = await allProductsCollection.find(query).toArray()
             res.send(getAllProducts);
+        })
+        app.get('/categoryProduct/:name', async (req, res) => {
+            const categoryName = req.params.name;
+            const query = { category: categoryName };
+            console.log(query)
+            const products = await allProductsCollection.find(query).toArray()
+            res.send(products)
         })
         app.get('/allProducts/seller', verifyJwt, async (req, res) => {
             const email = req.query.email
