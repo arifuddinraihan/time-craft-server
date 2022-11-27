@@ -337,7 +337,7 @@ async function run() {
         })
         app.put('/advertisedProducts/:id', verifyJwt, verifySeller, async (req, res) => {
             const id = req.params.id
-            console.log(id)
+            // console.log(id)
             const query = { _id: ObjectId(id) }
             const updatedDoc = {
                 $set: {
@@ -345,7 +345,7 @@ async function run() {
                 }
             }
             const result = await allProductsCollection.updateOne(query, updatedDoc)
-            console.log(result)
+            // console.log(result)
             res.send(result);
         })
         app.get('/advertisedProducts', async (req, res) => {
