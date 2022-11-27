@@ -289,7 +289,7 @@ async function run() {
         app.get('/productsPerCategory', async (req, res) => {
             const category = req.query.name
             // console.log(category)
-            const filter = { category: category }
+            const filter = { category: category , paid : false}
             const result = await allProductsCollection.find(filter).toArray()
             // console.log(result)
             res.send(result);
