@@ -176,8 +176,8 @@ async function run() {
             res.send(result)
         })
         app.get('/users/sellers', verifyJwt, verifyBuyer, async (req, res) => {
-            const query = { verifySeller : "yes" };
-            console.log(result)
+            const query = { verifySeller: "yes" };
+            // console.log(result)
             const result = await usersCollection.find(query).toArray()
             res.send(result)
         })
@@ -259,30 +259,30 @@ async function run() {
             res.send(newPostedProduct);
         })
 
-        app.put('/allProducts/:id', verifyJwt, verifyBuyer, async(req, res)=>{
+        app.put('/allProducts/:id', verifyJwt, verifyBuyer, async (req, res) => {
             const id = req.params.id
-            const query = { _id : ObjectId(id) }
-            const options = {upsert : true}
+            const query = { _id: ObjectId(id) }
+            const options = { upsert: true }
             const updateDoc = {
                 $set: {
-                    reportedProduct : "yes"
+                    reportedProduct: "yes"
                 }
             }
             const reported = await allProductsCollection.updateOne(query, updateDoc, options)
-            console.log(reported)
+            // console.log(reported)
             res.send(reported)
         })
-        app.get('/reportedItems', verifyJwt, verifyAdmin, async(req, res)=>{
-            const query = { reportedProduct : "yes" }
+        app.get('/reportedItems', verifyJwt, verifyAdmin, async (req, res) => {
+            const query = { reportedProduct: "yes" }
             const reportedItems = await allProductsCollection.find(query).toArray()
-            console.log(reportedItems)
+            // console.log(reportedItems)
             res.send(reportedItems)
         })
-        app.delete('/reportedItems/:id', verifyJwt, verifyAdmin, async(req, res)=>{
+        app.delete('/reportedItems/:id', verifyJwt, verifyAdmin, async (req, res) => {
             const id = req.params.id
-            const query = { _id : ObjectId(id) }
+            const query = { _id: ObjectId(id) }
             const deleteReportedItem = await allProductsCollection.deleteOne(query)
-            console.log(deleteReportedItem)
+            // console.log(deleteReportedItem)
             res.send(deleteReportedItem)
         })
         app.delete('/allProducts/:id', verifyJwt, verifySeller, async (req, res) => {
@@ -319,12 +319,7 @@ async function run() {
             res.send(userData)
         })
 
-        app.post('/bookedProducts', verifyJwt, async (req, res) => {
-            const email = req.query.email
-            const decodedEmail = req.decoded.email
-            if (email !== decodedEmail) {
-                return res.status(403).send({ message: 'forbidden access' })
-            }
+        app.post('/bookedProducts', verifyJwt, verifyBuyer, async (req, res) => {
             const bookedProduct = req.body
             // console.log(bookedProduct)
             const result = await bookedProductCollection.insertOne(bookedProduct);
@@ -339,6 +334,42 @@ async function run() {
             const query = { clientEmail: email }
             // console.log(bookedProduct)
             const result = await bookedProductCollection.find(query).toArray();
+            res.send(result);
+        })
+        app.get('/bookedProducts/:id', async (req, res) => {
+            const id = req.params.id
+            // console.log(id)
+            const query = { _id : ObjectId(id) }
+            const result = await allProductsCollection.findOne(query)
+            // console.log(result)
+            res.send(result);
+        })
+        app.put('/bookedProducts/status-booked/:id', verifyJwt, verifyBuyer, async (req, res) => {
+            const id = req.params.id
+            // console.log(id)
+            const query = { _id: ObjectId(id) }
+            const options = { upsert: true }
+            const updateDoc = {
+                $set: {
+                    status: "booked"
+                }
+            }
+            const result = await allProductsCollection.updateOne(query, updateDoc, options)
+            // console.log(result)
+            res.send(result);
+        })
+        app.put('/bookedProducts/status-booked/:id', verifyJwt, verifyBuyer, async (req, res) => {
+            const id = req.params.id
+            // console.log(id)
+            const query = { _id : ObjectId(id) }
+            const options = { upsert : true }
+            const updateDoc = {
+                $set : {
+                    status : "booked"
+                }
+            }
+            const result = await allProductsCollection.updateOne(query , updateDoc, options)
+            // console.log(result)
             res.send(result);
         })
         app.delete('/bookedProducts/:id', verifyJwt, verifyBuyer, async (req, res) => {
