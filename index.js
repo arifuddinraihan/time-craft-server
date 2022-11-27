@@ -40,6 +40,7 @@ async function run() {
         const newsLetterCollection = client.db('timeCraftDB').collection('newsLetter');
         const allProductsCollection = client.db('timeCraftDB').collection('allProducts');
         const productsCategoryCollection = client.db('timeCraftDB').collection('productsCategory');
+        const bookedProductCollection = client.db('timeCraftDB').collection('bookedProduct');
         // const allProductCollection = 
 
         const verifyAdmin = async (req, res, next) => {
@@ -53,6 +54,16 @@ async function run() {
             next();
         }
 
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            if (user) {
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: "10h" })
+                return res.send({ accessToken: token });
+            }
+            res.status(403).send({ accessToken: '' })
+        })
 
         app.post('/newsLetterEmails', async (req, res) => {
             const email = req.body;
@@ -125,7 +136,6 @@ async function run() {
             const result = await usersCollection.deleteOne(filter)
             res.send(result)
         })
-
 
         app.put('/users/sellers/:id', verifyJwt, async (req, res) => {
             const decodedEmail = req.decoded.email
@@ -201,12 +211,28 @@ async function run() {
             const result = await productsCategoryCollection.find(query).toArray()
             res.send(result);
         })
+        app.get('/productsCategory/:name', async (req, res) => {
+            const category = req.params.name
+            const filter = { categoryName: category }
+            const result = await productsCategoryCollection.findOne(filter)
+            // console.log(result)
+            res.send(result);
+        })
+        app.get('/productsPerCategory', async (req, res) => {
+            const category = req.query.name
+            // console.log(category)
+            const filter = { category: category }
+            const result = await allProductsCollection.find(filter).toArray()
+            // console.log(result)
+            res.send(result);
+        })
 
         app.post('/allProducts', async (req, res) => {
             const productDetails = req.body;
             const newPostedProduct = await allProductsCollection.insertOne(productDetails)
             res.send(newPostedProduct);
         })
+
         app.get('/allProducts', verifyJwt, async (req, res) => {
             const email = req.query.email
             const decodedEmail = req.decoded.email
@@ -218,13 +244,7 @@ async function run() {
             const getAllProducts = await allProductsCollection.find(query).toArray()
             res.send(getAllProducts);
         })
-        app.get('/categoryProduct/:name', async (req, res) => {
-            const categoryName = req.params.name;
-            const query = { category: categoryName };
-            console.log(query)
-            const products = await allProductsCollection.find(query).toArray()
-            res.send(products)
-        })
+
         app.get('/allProducts/seller', verifyJwt, async (req, res) => {
             const email = req.query.email
             // console.log(email)
@@ -238,16 +258,27 @@ async function run() {
             res.send(userData)
         })
 
-
-        app.get('/jwt', async (req, res) => {
-            const email = req.query.email;
-            const query = { email: email };
-            const user = await usersCollection.findOne(query);
-            if (user) {
-                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '2 days' })
-                return res.send({ accessToken: token });
+        app.post('/bookedProducts', verifyJwt, async (req, res) => {
+            const email = req.query.email
+            const decodedEmail = req.decoded.email
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
             }
-            res.status(403).send({ accessToken: '' })
+            const bookedProduct = req.body
+            // console.log(bookedProduct)
+            const result = await bookedProductCollection.insertOne(bookedProduct);
+            res.send(result);
+        })
+        app.get('/bookedProducts', verifyJwt, async (req, res) => {
+            const email = req.query.email
+            const decodedEmail = req.decoded.email
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            const query = { clientEmail: email }
+            // console.log(bookedProduct)
+            const result = await bookedProductCollection.find(query).toArray();
+            res.send(result);
         })
 
 
