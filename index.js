@@ -272,6 +272,19 @@ async function run() {
             console.log(reported)
             res.send(reported)
         })
+        app.get('/reportedItems', verifyJwt, verifyAdmin, async(req, res)=>{
+            const query = { reportedProduct : "yes" }
+            const reportedItems = await allProductsCollection.find(query).toArray()
+            console.log(reportedItems)
+            res.send(reportedItems)
+        })
+        app.delete('/reportedItems/:id', verifyJwt, verifyAdmin, async(req, res)=>{
+            const id = req.params.id
+            const query = { _id : ObjectId(id) }
+            const deleteReportedItem = await allProductsCollection.deleteOne(query)
+            console.log(deleteReportedItem)
+            res.send(deleteReportedItem)
+        })
         app.delete('/allProducts/:id', verifyJwt, verifySeller, async (req, res) => {
             const id = req.params.id
             // console.log(id)
