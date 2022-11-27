@@ -258,6 +258,20 @@ async function run() {
             const newPostedProduct = await allProductsCollection.insertOne(productDetails)
             res.send(newPostedProduct);
         })
+
+        app.put('/allProducts/:id', verifyJwt, verifyBuyer, async(req, res)=>{
+            const id = req.params.id
+            const query = { _id : ObjectId(id) }
+            const options = {upsert : true}
+            const updateDoc = {
+                $set: {
+                    reportedProduct : "yes"
+                }
+            }
+            const reported = await allProductsCollection.updateOne(query, updateDoc, options)
+            console.log(reported)
+            res.send(reported)
+        })
         app.delete('/allProducts/:id', verifyJwt, verifySeller, async (req, res) => {
             const id = req.params.id
             // console.log(id)
