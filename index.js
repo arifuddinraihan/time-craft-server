@@ -59,7 +59,17 @@ async function run() {
             const user = await usersCollection.findOne(query);
 
             if (user?.role !== 'Buyer') {
-                return res.status(403).send({ message: 'forbidden access, your are not an Buyer' })
+                return res.status(403).send({ message: 'forbidden access, your are not anBuyer' })
+            }
+            next();
+        }
+        const verifySeller = async (req, res, next) => {
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await usersCollection.findOne(query);
+
+            if (user?.role !== 'Seller') {
+                return res.status(403).send({ message: 'forbidden access, your are not a Seller' })
             }
             next();
         }
@@ -165,6 +175,12 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updateDoc, options)
             res.send(result)
         })
+        app.get('/users/sellers', verifyJwt, verifyBuyer, async (req, res) => {
+            const query = { verifySeller : "yes" };
+            console.log(result)
+            const result = await usersCollection.find(query).toArray()
+            res.send(result)
+        })
 
         app.get('/users/buyers', verifyJwt, async (req, res) => {
             const email = req.query.email
@@ -242,6 +258,14 @@ async function run() {
             const newPostedProduct = await allProductsCollection.insertOne(productDetails)
             res.send(newPostedProduct);
         })
+        app.delete('/allProducts/:id', verifyJwt, verifySeller, async (req, res) => {
+            const id = req.params.id
+            // console.log(id)
+            const query = { _id: ObjectId(id) }
+            const result = await allProductsCollection.deleteOne(query)
+            // console.log(result)
+            res.send(result);
+        })
 
         app.get('/allProducts', verifyJwt, async (req, res) => {
             const email = req.query.email
@@ -293,7 +317,7 @@ async function run() {
         app.delete('/bookedProducts/:id', verifyJwt, verifyBuyer, async (req, res) => {
             const id = req.params.id
             // console.log(id)
-            const query = { _id : ObjectId(id)}
+            const query = { _id: ObjectId(id) }
             const result = await bookedProductCollection.deleteOne(query)
             // console.log(result)
             res.send(result);
