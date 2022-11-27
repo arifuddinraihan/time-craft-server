@@ -335,6 +335,24 @@ async function run() {
             // console.log(result)
             res.send(result);
         })
+        app.put('/advertisedProducts/:id', verifyJwt, verifySeller, async (req, res) => {
+            const id = req.params.id
+            console.log(id)
+            const query = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    advertised: true
+                }
+            }
+            const result = await allProductsCollection.updateOne(query, updatedDoc)
+            console.log(result)
+            res.send(result);
+        })
+        app.get('/advertisedProducts', async (req, res) => {
+            const query = { advertised: true }
+            const result = await allProductsCollection.find(query).toArray()
+            res.send(result);
+        })
 
         app.get('/allProducts', verifyJwt, async (req, res) => {
             const email = req.query.email
