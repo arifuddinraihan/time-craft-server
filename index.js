@@ -53,13 +53,23 @@ async function run() {
             }
             next();
         }
+        const verifyBuyer = async (req, res, next) => {
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await usersCollection.findOne(query);
+
+            if (user?.role !== 'Buyer') {
+                return res.status(403).send({ message: 'forbidden access, your are not an Buyer' })
+            }
+            next();
+        }
 
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             if (user) {
-                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: "10h" })
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: "7d" })
                 return res.send({ accessToken: token });
             }
             res.status(403).send({ accessToken: '' })
@@ -278,6 +288,14 @@ async function run() {
             const query = { clientEmail: email }
             // console.log(bookedProduct)
             const result = await bookedProductCollection.find(query).toArray();
+            res.send(result);
+        })
+        app.delete('/bookedProducts/:id', verifyJwt, verifyBuyer, async (req, res) => {
+            const id = req.params.id
+            // console.log(id)
+            const query = { _id : ObjectId(id)}
+            const result = await bookedProductCollection.deleteOne(query)
+            // console.log(result)
             res.send(result);
         })
 
