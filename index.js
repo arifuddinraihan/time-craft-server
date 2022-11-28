@@ -46,6 +46,7 @@ async function run() {
         const productsCategoryCollection = client.db('timeCraftDB').collection('productsCategory');
         const bookedProductCollection = client.db('timeCraftDB').collection('bookedProduct');
         const productSoldCollection = client.db('timeCraftDB').collection('productSold');
+        const blogCollection = client.db('timeCraftDB').collection('blogs');
         // const allProductCollection = 
 
         // User verification via server Admin, Buyer & Seller
@@ -92,14 +93,18 @@ async function run() {
             }
             res.status(403).send({ accessToken: '' })
         })
-
+        app.get('/blog', async (req, res) => {
+            const query = {}
+            const blogs = await blogCollection.find(query).toArray()
+            res.send(blogs)
+        })
         // Payment route for Stripe Payment
         app.post('/create-payment-intent', async (req, res) => {
             const booking = req.body;
-            console.log(booking)
+            // console.log(booking)
             const price = booking.resalePrice;
             const amount = price * 100
-            console.log(amount)
+            // console.log(amount)
             const paymentIntent = await stripe.paymentIntents.create({
                 currency: 'usd',
                 amount: amount,
@@ -169,7 +174,7 @@ async function run() {
                     name: user?.name,
                     email: user?.email,
                     imageURL: user?.imageURL,
-                    role: 'buyer'
+                    role: 'Buyer'
                 },
             };
             const userData = await usersCollection.updateOne(query, updateDoc, options)
@@ -185,6 +190,19 @@ async function run() {
             }
             const query = {};
             const userData = await usersCollection.find(query).toArray();
+            res.send(userData)
+        })
+        app.get('/userBuyer', verifyJwt, async (req, res) => {
+            const email = req.query.email
+            const decodedEmail = req.decoded.email
+            // console.log(decodedEmail)
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            const query = { email: email, role: "Buyer" };
+            const userData = await usersCollection.findOne(query);
+
+            // console.log(userData)
             res.send(userData)
         })
 
@@ -422,7 +440,7 @@ async function run() {
             const result = await bookedProductCollection.find(query).toArray();
             res.send(result);
         })
-        app.get('/bookedProducts/:id', async (req, res) => { 
+        app.get('/bookedProducts/:id', async (req, res) => {
             const id = req.params.id
             // console.log(id)
             const filter = { _id: ObjectId(id) }
