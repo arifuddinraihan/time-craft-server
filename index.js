@@ -14,6 +14,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// JWT verification process
 function verifyJwt(req, res, next) {
     // console.log('token inside verifyJwt', req.headers.authorization)
     const authHeader = req.headers.authorization
@@ -38,6 +39,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function run() {
     try {
+        // all database collection
         const usersCollection = client.db('timeCraftDB').collection('users');
         const newsLetterCollection = client.db('timeCraftDB').collection('newsLetter');
         const allProductsCollection = client.db('timeCraftDB').collection('allProducts');
@@ -46,6 +48,7 @@ async function run() {
         const productSoldCollection = client.db('timeCraftDB').collection('productSold');
         // const allProductCollection = 
 
+        // User verification via server Admin, Buyer & Seller
         const verifyAdmin = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
             const query = { email: decodedEmail };
@@ -77,6 +80,8 @@ async function run() {
             next();
         }
 
+
+        // jwt token issued from here
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
@@ -88,8 +93,10 @@ async function run() {
             res.status(403).send({ accessToken: '' })
         })
 
+        // Payment route for Stripe Payment
         app.post('/create-payment-intent', async (req, res) => {
             const booking = req.body;
+            console.log(booking)
             const price = booking.resalePrice;
             const amount = price * 100
             // console.log(amount)
@@ -127,6 +134,7 @@ async function run() {
             res.send(result);
         })
 
+        // newsLetter API, email collection
         app.post('/newsLetterEmails', async (req, res) => {
             const email = req.body;
             // console.log(email)
@@ -134,6 +142,8 @@ async function run() {
             res.send(newsLetterEmail)
         })
 
+
+        // User route for updating user of firebase inside server user database
         app.post('/users', async (req, res) => {
             const user = req.body;
             const options = { upsert: true };
@@ -148,19 +158,22 @@ async function run() {
             res.send(userData)
         })
 
+
         // Problem in user data base using google login
-        app.patch('/users', async (req, res) => {
+        app.put('/users', async (req, res) => {
             const user = req.body;
-            const email = user?.email;
-            const query = { email: email };
+            const query = { email: user?.email };
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
                     name: user?.name,
+                    email: user?.email,
                     imageURL: user?.imageURL,
+                    role: 'buyer'
                 },
             };
             const userData = await usersCollection.updateOne(query, updateDoc, options)
+            console.log(userData)
             res.send(userData)
         })
 
@@ -217,10 +230,16 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updateDoc, options)
             res.send(result)
         })
-        app.get('/users/sellers', verifyJwt, verifyBuyer, async (req, res) => {
-            const query = { verifySeller: "yes" };
+        app.get('/users/sellers', verifyJwt, async (req, res) => {
+            const email = req.query.email
+            const decodedEmail = req.decoded.email
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            const query = { role: "seller" };
             // console.log(result)
             const result = await usersCollection.find(query).toArray()
+            console.log(result)
             res.send(result)
         })
 
@@ -286,16 +305,23 @@ async function run() {
             // console.log(result)
             res.send(result);
         })
-        app.get('/productsPerCategory', async (req, res) => {
+        app.get('/productsPerCategory', verifyJwt, async (req, res) => {
+            const decodedEmail = req.decoded.email
+            const query = { email: decodedEmail }
+            const user = await usersCollection.findOne(query)
+            if (!user.role) {
+                return res.status(403).send({ message: 'forbidden access, your not an verified user.' })
+            }
+            const id = req.params.id;
             const category = req.query.name
             // console.log(category)
-            const filter = { category: category , paid : false}
+            const filter = { category: category, paid: false }
             const result = await allProductsCollection.find(filter).toArray()
             // console.log(result)
             res.send(result);
         })
 
-        app.post('/allProducts', async (req, res) => {
+        app.post('/allProducts', verifyJwt, verifySeller, async (req, res) => {
             const productDetails = req.body;
             const newPostedProduct = await allProductsCollection.insertOne(productDetails)
             res.send(newPostedProduct);
@@ -396,7 +422,7 @@ async function run() {
             const result = await bookedProductCollection.find(query).toArray();
             res.send(result);
         })
-        app.get('/bookedProducts/:id', async (req, res) => {
+        app.get('/bookedProducts/:id', verifyJwt, verifyBuyer, async (req, res) => {
             const id = req.params.id
             // console.log(id)
             const query = { _id: ObjectId(id) }
