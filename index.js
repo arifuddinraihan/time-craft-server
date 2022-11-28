@@ -323,13 +323,7 @@ async function run() {
             // console.log(result)
             res.send(result);
         })
-        app.get('/productsPerCategory', verifyJwt, async (req, res) => {
-            const decodedEmail = req.decoded.email
-            const query = { email: decodedEmail }
-            const user = await usersCollection.findOne(query)
-            if (!user.role) {
-                return res.status(403).send({ message: 'forbidden access, your not an verified user.' })
-            }
+        app.get('/productsPerCategory', async (req, res) => {
             const id = req.params.id;
             const category = req.query.name
             // console.log(category)
@@ -404,7 +398,6 @@ async function run() {
             if (email !== decodedEmail) {
                 return res.status(403).send({ message: 'forbidden access' })
             }
-            const category = await productsCategoryCollection.find()
             const query = {};
             const getAllProducts = await allProductsCollection.find(query).toArray()
             res.send(getAllProducts);
