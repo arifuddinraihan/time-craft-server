@@ -99,7 +99,7 @@ async function run() {
             console.log(booking)
             const price = booking.resalePrice;
             const amount = price * 100
-            // console.log(amount)
+            console.log(amount)
             const paymentIntent = await stripe.paymentIntents.create({
                 currency: 'usd',
                 amount: amount,
@@ -173,7 +173,7 @@ async function run() {
                 },
             };
             const userData = await usersCollection.updateOne(query, updateDoc, options)
-            console.log(userData)
+            // console.log(userData)
             res.send(userData)
         })
 
@@ -239,7 +239,7 @@ async function run() {
             const query = { role: "seller" };
             // console.log(result)
             const result = await usersCollection.find(query).toArray()
-            console.log(result)
+            // console.log(result)
             res.send(result)
         })
 
@@ -422,11 +422,11 @@ async function run() {
             const result = await bookedProductCollection.find(query).toArray();
             res.send(result);
         })
-        app.get('/bookedProducts/:id', verifyJwt, verifyBuyer, async (req, res) => {
+        app.get('/bookedProducts/:id', async (req, res) => { 
             const id = req.params.id
             // console.log(id)
-            const query = { _id: ObjectId(id) }
-            const result = await allProductsCollection.findOne(query)
+            const filter = { _id: ObjectId(id) }
+            const result = await allProductsCollection.findOne(filter)
             // console.log(result)
             res.send(result);
         })
