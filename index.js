@@ -97,7 +97,7 @@ async function run() {
             const query = {}
             const blogs = await blogCollection.find(query).toArray()
             res.send(blogs)
-        })
+        }) 
         // Payment route for Stripe Payment
         app.post('/create-payment-intent', async (req, res) => {
             const booking = req.body;
